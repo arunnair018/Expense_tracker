@@ -113,7 +113,7 @@ export default function LoginScreen() {
   function validateForm() {
     setEmailTouched(true)
     setPasswordTouched(true)
-    const nextEmailError = getEmailError(email)
+    const nextEmailError = getEmailError(email, isLogin)
     const nextPasswordError = getPasswordError(password, isLogin)
     setEmailError(nextEmailError)
     setPasswordError(nextPasswordError)
@@ -122,10 +122,11 @@ export default function LoginScreen() {
     return !(nextEmailError || nextPasswordError)
   }
 
-  function getEmailError(value: string) {
+  function getEmailError(value: string, loginMode = false) {
     const trimmedEmail = value.trim()
     if (!trimmedEmail) return 'Email is required.'
     if (!/\S+@\S+\.\S+/.test(trimmedEmail)) return 'Enter a valid email address.'
+    if (!loginMode && !/@gmail\.com$/i.test(trimmedEmail)) return 'Only the Gmail domain is accepted for sign up.'
     return ''
   }
 
@@ -253,7 +254,7 @@ export default function LoginScreen() {
             autoCorrect={false}
             onBlur={() => {
               setEmailTouched(true)
-              setEmailError(getEmailError(email))
+              setEmailError(getEmailError(email, isLogin))
             }}
           />
           {emailTouched && emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
