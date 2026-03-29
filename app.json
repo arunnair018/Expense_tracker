@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "HelloWorld",
-    "slug": "HelloWorld",
+    "name": "Accountant",
+    "slug": "accountant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "helloworld",
+    "scheme": "accountant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,7 +13,9 @@
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.accountant",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -25,17 +27,15 @@
         "expo-splash-screen",
         {
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#080d1c"
         }
       ],
       "expo-web-browser",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "expo-build-properties",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each user can only read/write their own data subtree
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Month-level documents
+      match /months/{yearMonth} {
+        allow read:   if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId;
+
+        // Prevent changing openingBalance once the month is confirmed (locked)
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && !(resource.data.isConfirmed == true
+               && request.resource.data.openingBalance != resource.data.openingBalance);
+
+        // Entries sub-collection
+        match /entries/{entryId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      // Instruments (RDs / FDs)
+      match /instruments/{instrumentId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Pool events (maturity allocations)
+      match /pool/{poolEventId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Planned expenses
+      match /planned/{plannedId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}

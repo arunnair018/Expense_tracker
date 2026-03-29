@@ -15,7 +15,9 @@ import {
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from 'firebase/auth'
+import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { auth } from '@/lib/firebase'
 import { useAuth } from '@/context/auth'
@@ -28,10 +30,12 @@ export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
   const [emailTouched, setEmailTouched] = useState(false)
   const [passwordTouched, setPasswordTouched] = useState(false)
 
@@ -47,13 +51,11 @@ export default function LoginScreen() {
   const formY = useRef(new Animated.Value(40)).current
   const landingOpacity = useRef(new Animated.Value(1)).current
 
-  // Floating orb animations
   const orb1Y = useRef(new Animated.Value(0)).current
   const orb2Y = useRef(new Animated.Value(0)).current
   const orb3Y = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    // Entrance animation sequence
     Animated.sequence([
       Animated.parallel([
         Animated.spring(logoScale, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
@@ -69,7 +71,6 @@ export default function LoginScreen() {
       ]),
     ]).start()
 
-    // Floating orbs loop
     const floatOrb = (anim: Animated.Value, distance: number, duration: number) => {
       Animated.loop(
         Animated.sequence([
@@ -84,9 +85,7 @@ export default function LoginScreen() {
   }, [])
 
   useEffect(() => {
-    if (user) {
-      router.replace('/(protected)')
-    }
+    if (user) router.replace('/(protected)')
   }, [user])
 
   function goToAuth(loginMode: boolean) {
@@ -100,33 +99,41 @@ export default function LoginScreen() {
     ]).start()
   }
 
+  function goBack() {
+    Animated.parallel([
+      Animated.timing(landingOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(formOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(formY, { toValue: 40, duration: 200, useNativeDriver: true }),
+    ]).start(() => setStage('landing'))
+  }
+
   function resetAuthForm() {
     setEmail('')
     setPassword('')
     setEmailError('')
     setPasswordError('')
     setFormError('')
+    setFormSuccess('')
     setEmailTouched(false)
     setPasswordTouched(false)
+    setShowPassword(false)
   }
 
   function validateForm() {
     setEmailTouched(true)
     setPasswordTouched(true)
-    const nextEmailError = getEmailError(email, isLogin)
+    const nextEmailError = getEmailError(email)
     const nextPasswordError = getPasswordError(password, isLogin)
     setEmailError(nextEmailError)
     setPasswordError(nextPasswordError)
     setFormError('')
-
     return !(nextEmailError || nextPasswordError)
   }
 
-  function getEmailError(value: string, loginMode = false) {
-    const trimmedEmail = value.trim()
-    if (!trimmedEmail) return 'Email is required.'
-    if (!/\S+@\S+\.\S+/.test(trimmedEmail)) return 'Enter a valid email address.'
-    if (!loginMode && !/@gmail\.com$/i.test(trimmedEmail)) return 'Only the Gmail domain is accepted for sign up.'
+  function getEmailError(value: string) {
+    const trimmed = value.trim()
+    if (!trimmed) return 'Email is required.'
+    if (!/\S+@\S+\.\S+/.test(trimmed)) return 'Enter a valid email address.'
     return ''
   }
 
@@ -137,7 +144,7 @@ export default function LoginScreen() {
     if (!/[A-Z]/.test(value)) return 'Include at least one uppercase letter.'
     if (!/[a-z]/.test(value)) return 'Include at least one lowercase letter.'
     if (!/\d/.test(value)) return 'Include at least one number.'
-    if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/`~+=;']/ .test(value)) return 'Include at least one special character.'
+    if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/`~+=;']/.test(value)) return 'Include at least one special character.'
     return ''
   }
 
@@ -159,6 +166,25 @@ export default function LoginScreen() {
         error.code === 'auth/invalid-credential' ? 'Email or password is incorrect.' :
         error.message
       setFormError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleForgotPassword() {
+    const err = getEmailError(email)
+    if (err) {
+      setEmailTouched(true)
+      setEmailError(err)
+      return
+    }
+    setLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, email.trim())
+      setFormSuccess('Reset link sent — check your inbox.')
+      setFormError('')
+    } catch {
+      setFormError('Could not send reset email. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -191,8 +217,9 @@ export default function LoginScreen() {
       </View>
 
       {/* LANDING STAGE */}
-      <Animated.View style={[styles.landing, { opacity: landingOpacity, pointerEvents: stage === 'landing' ? 'auto' : 'none' }]}>
-        {/* Logo */}
+      <Animated.View
+        style={[styles.landing, { opacity: landingOpacity, pointerEvents: stage === 'landing' ? 'auto' : 'none' }]}
+      >
         <Animated.View style={[styles.logoWrap, { transform: [{ scale: logoScale }], opacity: logoOpacity }]}>
           <View style={styles.logoIcon}>
             <Text style={styles.logoIconText}>A</Text>
@@ -200,13 +227,11 @@ export default function LoginScreen() {
           <Text style={styles.logoText}>Accountant</Text>
         </Animated.View>
 
-        {/* Tagline */}
         <Animated.View style={{ opacity: taglineOpacity, transform: [{ translateY: taglineY }] }}>
           <Text style={styles.tagline}>Your money.{'\n'}Finally makes sense.</Text>
           <Text style={styles.subTagline}>Track. Budget. Own it.</Text>
         </Animated.View>
 
-        {/* Buttons */}
         <Animated.View style={[styles.buttonGroup, { opacity: buttonOpacity, transform: [{ translateY: buttonY }] }]}>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => goToAuth(false)} activeOpacity={0.85}>
             <Text style={styles.primaryBtnText}>Get Started</Text>
@@ -228,24 +253,31 @@ export default function LoginScreen() {
           },
         ]}
       >
+        {/* Back button */}
+        <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={18} color="#8aabf7" />
+          <Text style={styles.backBtnText}>Back</Text>
+        </TouchableOpacity>
+
         <Text style={styles.authTitle}>{isLogin ? 'Welcome back' : 'Create account'}</Text>
         <Text style={styles.authSubtitle}>
           {isLogin ? 'Sign in to your account' : 'Start your financial clarity journey'}
         </Text>
 
-        {/* Email input */}
+        {/* Email */}
         <View style={styles.inputWrap}>
           <Text style={styles.inputLabel}>Email</Text>
           <TextInput
-            style={[styles.input, emailError ? styles.inputError : null]}
-            placeholder={isLogin ? '' : 'you@example.com'}
-            placeholderTextColor="#6b7a99"
+            style={[styles.input, emailTouched && emailError ? styles.inputError : null]}
+            placeholder="you@example.com"
+            placeholderTextColor="#4a5470"
             value={email}
-            onChangeText={(value) => {
-              setEmail(value)
-              if (emailError || formError) {
+            onChangeText={(v) => {
+              setEmail(v)
+              if (emailError || formError || formSuccess) {
                 setEmailError('')
                 setFormError('')
+                setFormSuccess('')
               }
             }}
             onFocus={() => setEmailTouched(true)}
@@ -254,44 +286,53 @@ export default function LoginScreen() {
             autoCorrect={false}
             onBlur={() => {
               setEmailTouched(true)
-              setEmailError(getEmailError(email, isLogin))
+              setEmailError(getEmailError(email))
             }}
           />
           {emailTouched && emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
         </View>
 
-        {/* Password input */}
+        {/* Password */}
         <View style={styles.inputWrap}>
           <Text style={styles.inputLabel}>Password</Text>
-          <TextInput
-            style={[styles.input, passwordError ? styles.inputError : null]}
-            placeholder={isLogin ? '' : 'Create a strong password'}
-            placeholderTextColor="#6b7a99"
-            value={password}
-            onChangeText={(value) => {
-              setPassword(value)
-              if (passwordError || formError) {
-                setPasswordError('')
-                setFormError('')
-              }
-            }}
-            onFocus={() => setPasswordTouched(true)}
-            secureTextEntry
-            onBlur={() => {
-              setPasswordTouched(true)
-              setPasswordError(getPasswordError(password, isLogin))
-            }}
-          />
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[styles.inputPassword, passwordTouched && passwordError ? styles.inputError : null]}
+              placeholder={isLogin ? '••••••••' : 'Create a strong password'}
+              placeholderTextColor="#4a5470"
+              value={password}
+              onChangeText={(v) => {
+                setPassword(v)
+                if (passwordError || formError || formSuccess) {
+                  setPasswordError('')
+                  setFormError('')
+                  setFormSuccess('')
+                }
+              }}
+              onFocus={() => setPasswordTouched(true)}
+              secureTextEntry={!showPassword}
+              onBlur={() => {
+                setPasswordTouched(true)
+                setPasswordError(getPasswordError(password, isLogin))
+              }}
+            />
+            <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(p => !p)} activeOpacity={0.7}>
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#5b7dd8" />
+            </TouchableOpacity>
+          </View>
+
           {!isLogin ? (
-            <Text style={styles.helperText}>
-              Use at least 8 characters with an uppercase letter, a lowercase letter, a number,
-              and a special character.
-            </Text>
-          ) : null}
+            <Text style={styles.helperText}>8+ chars · uppercase · lowercase · number · special character</Text>
+          ) : (
+            <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn} activeOpacity={0.7}>
+              <Text style={styles.forgotText}>Forgot password?</Text>
+            </TouchableOpacity>
+          )}
           {passwordTouched && passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
         </View>
 
         {formError ? <Text style={styles.formErrorText}>{formError}</Text> : null}
+        {formSuccess ? <Text style={styles.formSuccessText}>{formSuccess}</Text> : null}
 
         {/* Submit */}
         <TouchableOpacity
@@ -308,15 +349,12 @@ export default function LoginScreen() {
 
         {/* Toggle */}
         <TouchableOpacity
-          onPress={() => {
-            setIsLogin((prev) => !prev)
-            resetAuthForm()
-          }}
+          onPress={() => { setIsLogin(p => !p); resetAuthForm() }}
           style={styles.toggleWrap}
         >
           <Text style={styles.toggleText}>
-            {isLogin ? "New here? " : "Already have an account? "}
-            <Text style={styles.toggleLink}>{isLogin ? "Sign up" : "Sign in"}</Text>
+            {isLogin ? 'New here?  ' : 'Already have an account?  '}
+            <Text style={styles.toggleLink}>{isLogin ? 'Sign up' : 'Sign in'}</Text>
           </Text>
         </TouchableOpacity>
       </Animated.View>
@@ -351,8 +389,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#060c1a',
     borderRadius: 999,
   },
-
-  // Grid
   gridLines: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
@@ -364,8 +400,6 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: 'rgba(99,120,200,0.06)',
   },
-
-  // Orbs
   orb: {
     position: 'absolute',
     borderRadius: 999,
@@ -394,8 +428,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a5298',
     opacity: 0.18,
   },
-
-  // Landing
   landing: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -441,10 +473,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   subTagline: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#5b7dd8',
-    fontWeight: '500',
-    letterSpacing: 2,
+    fontWeight: '600',
+    letterSpacing: 2.5,
     textTransform: 'uppercase',
     marginBottom: 60,
   },
@@ -480,8 +512,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-
-  // Auth sheet
   authSheet: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -492,11 +522,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     left: 28,
-    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: 4,
   },
   backBtnText: {
-    color: '#5b7dd8',
-    fontSize: 16,
+    color: '#8aabf7',
+    fontSize: 15,
     fontWeight: '500',
   },
   authTitle: {
@@ -516,33 +549,62 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   inputLabel: {
-    color: '#8aabf7',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.2,
+    color: '#6b84b8',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(99,130,220,0.2)',
+    borderColor: 'rgba(99,130,220,0.18)',
     borderRadius: 12,
     padding: 16,
-    fontSize: 16,
+    fontSize: 15,
     color: '#fff',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputPassword: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(99,130,220,0.18)',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
+    color: '#fff',
+    paddingRight: 52,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    padding: 4,
   },
   inputError: {
     borderColor: '#ef4444',
   },
+  forgotBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  forgotText: {
+    color: '#8aabf7',
+    fontSize: 13,
+    fontWeight: '500',
+  },
   helperText: {
     marginTop: 8,
-    color: '#7f95c9',
+    color: '#4a5a80',
     fontSize: 12,
     lineHeight: 18,
   },
   errorText: {
-    marginTop: 8,
+    marginTop: 7,
     color: '#f87171',
     fontSize: 12,
     fontWeight: '500',
@@ -551,7 +613,14 @@ const styles = StyleSheet.create({
     color: '#f87171',
     fontSize: 13,
     marginTop: -4,
-    marginBottom: 10,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  formSuccessText: {
+    color: '#34d399',
+    fontSize: 13,
+    marginTop: -4,
+    marginBottom: 12,
     fontWeight: '500',
   },
   submitBtn: {
@@ -579,7 +648,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleText: {
-    color: '#5b7dd8',
+    color: '#4a5a80',
     fontSize: 14,
   },
   toggleLink: {
