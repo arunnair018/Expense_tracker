@@ -1,309 +1,316 @@
-# Finance Tracker App — Full Spec for Claude Code
+# 📊 Bank Statement Tally
 
-## Tech Stack
-- React Native + Expo (Expo Router file-based navigation)
-- Firebase Firestore (database)
-- Firebase Auth (authentication)
-- Expo Go compatible (avoid bare workflow dependencies where possible)
+A MERN stack single-page application that parses your bank statement for any given month, extracts and categorizes transactions using the Claude AI API, and reconciles your credits and debits to verify your financial records are accurate.
+
+> **This is not a traditional expense tracker.** The goal is _reconciliation_ — ensuring your statement totals tally correctly — with AI-assisted categorization as a bonus layer on top.
 
 ---
 
-## App Structure — 3 Pages
+## ✨ Features
 
-Navigation: **bottom tab bar** (not top tabs) using `expo-router` tabs.
-
-```
-app/
-  (tabs)/
-    index.tsx          → Dashboard
-    pool.tsx           → Pool
-    instruments.tsx    → Instruments
-  _layout.tsx          → Root layout with tab bar
-```
-
----
-
-## Page 1 — Dashboard
-
-### Purpose
-Monthly income/expense tracker. Shows where money went each month.
-
-### Key Concepts
-- User selects a month at the top (month switcher, horizontal scroll)
-- All data is scoped to the selected month
-- Opening balance = previous month's closing balance (auto-calculated, read-only)
-- Closing balance = opening balance + credits - savings - investments - expenses - subscriptions
-- Closing balance is NOT shown as a credit line item — it silently rolls to next month
-
-### UI Components
-
-**Month switcher** — horizontal scrollable row of month pills (Jan, Feb... Dec). Active month highlighted.
-
-**4 stat cards (2×2 grid on mobile)**
-- Total credits (green) — sum of all credit entries this month
-- Saved & invested (blue) — sum of savings + investment entries
-- Expenses (red) — sum of expense entries + subscriptions
-- Month-end balance (green) — auto-calculated
-
-**Sections with entry rows** (each section is a card):
-1. Credits — salary, Paru, interest, Groww, etc.
-2. Savings — RD instalments (auto-populated from Instruments)
-3. Investments — SIP, BHIMA GLD, etc.
-4. Expenses — rent, grocery, trips, amazon, etc.
-5. Subscriptions — OpenAI, Claude, etc.
-
-Each row: `name` on left, `amount` on right, with a category color dot.
-
-**Floating "+" button** — opens bottom sheet to add a new entry.
-
-### Add Entry — Bottom Sheet
-Fields:
-- Name (text input)
-- Amount (numeric input, ₹)
-- Category (picker: Credit / Savings / Investment / Expense / Subscription)
-- Type tag (recurring / one-time) — optional
-
-On save: entry added to Firestore under `months/{year-month}/entries/{id}`.
-
-### New Month Setup Flow (4-step modal, triggered when opening a month with no data)
-
-**Step 1 — Start month**
-- Show opening balance (auto-calculated from last month, locked/read-only)
-- CTA: "Review recurring entries →"
-
-**Step 2 — Recurring entries**
-- Pre-populate from previous month's recurring entries + RD instalments from Instruments
-- Each row has: checkbox (to include/skip), name, editable amount field
-- Sections: Credits, Savings (from Instruments), Investments, Fixed Expenses, Subscriptions
-- CTA: "Done, add new entries →"
-
-**Step 3 — Add new entries**
-- Simple inline form: name + amount + category + "+" button
-- Lists entries added so far
-- CTA: "Review & confirm →"
-
-**Step 4 — Confirm**
-- Summary stat cards (total credits, saved, expenses, projected balance)
-- Confirm list grouped by section
-- CTA: "Confirm & open [Month]"
-- On confirm: write all entries to Firestore, lock opening balance
+- 📁 Upload bank statements (PDF / CSV)
+- 📅 Filter and parse transactions by a specific month
+- 💰 Extract **opening balance** and **closing balance** automatically
+- 🔍 Separate **credits** and **debits** from raw transaction data
+- 🔒 Strip all **PII / sensitive information** before any external API call
+- 🤖 Send sanitized credit data to **Claude API** for structured categorization
+- 🗂️ Get back enriched, categorized transaction data (e.g. Salary, Refund, Transfer)
+- ✅ Perform a **tally check** — verify that `Opening Balance + Credits − Debits = Closing Balance`
+- 📊 View a clean monthly summary dashboard
 
 ---
 
-## Page 2 — Pool
+## 🛠️ Tech Stack
 
-### Purpose
-Track RD/FD maturity events and how the lump sum is allocated to goals. **Completely separate from monthly tracker.** Pool money comes from instrument maturities, not from monthly salary.
+| Layer      | Technology                          |
+|------------|-------------------------------------|
+| Frontend   | React.js (SPA)                      |
+| Backend    | Node.js + Express.js                |
+| Database   | MongoDB + Mongoose                  |
+| AI         | Anthropic Claude API                |
+| Parsing    | PDF.js / csv-parser (configurable)  |
+| Styling    | TailwindCSS / CSS Modules           |
 
-### Key Concepts
-- Each maturity event is independent
-- User plans allocation before/when money arrives
-- Leftover after allocation → goes to savings or reinvested
-- Pool has NO connection to monthly opening/closing balance
+---
 
-### UI Components
+## 🏗️ Architecture Overview
 
-**3 stat cards**
-- Total matured (lifetime) — sum of all matured instrument amounts
-- Allocated so far — sum of all allocations across all maturities
-- Unallocated — difference (shown in amber if > 0)
-
-**Maturity event cards** (one per RD/FD that has matured or is upcoming)
-
-Each card has:
-- RD name + bank name
-- Status badge: `active` (upcoming maturity) / `in progress` (matured, partially allocated) / `done` (fully allocated)
-- Maturity amount
-- Progress bar: % allocated
-- Allocation list — each goal as a row: dot color + name + amount + %
-- Unallocated remainder row (amber if pending)
-- "View in instruments →" link
-- "+ add goal" inline form (name + amount)
-
-**States:**
-- Upcoming: show planned allocations, allow editing
-- Matured: show actual allocations, track remainder
-- Done: read-only, collapsed by default
-
-**Bottom section (2 columns):**
-- Upcoming maturities timeline (vertical list with date + amount)
-- Monthly RD contributions summary (pulled from Instruments)
-
-### Firestore Structure
 ```
-pool/
-  {maturity-event-id}/
-    instrumentId: string
-    maturedAmount: number
-    maturedDate: timestamp
-    status: 'upcoming' | 'in-progress' | 'done'
-    allocations: [
-      { id, goalName, amount, plannedOrActual }
-    ]
+┌─────────────────────────────────────────────────────────────┐
+│                        React SPA                            │
+│  ┌──────────────┐   ┌─────────────────┐   ┌─────────────┐  │
+│  │ File Upload  │ → │  Month Selector  │ → │  Dashboard  │  │
+│  └──────────────┘   └─────────────────┘   └─────────────┘  │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ REST API
+┌──────────────────────────▼──────────────────────────────────┐
+│                     Express.js API                          │
+│                                                             │
+│  ┌─────────────┐   ┌──────────────┐   ┌─────────────────┐  │
+│  │  Statement  │   │  Sanitizer   │   │  Tally Engine   │  │
+│  │   Parser    │ → │  (PII Strip) │ → │  (Reconcile)    │  │
+│  └─────────────┘   └──────┬───────┘   └─────────────────┘  │
+│                           │                                 │
+│                    ┌──────▼───────┐                         │
+│                    │  Claude API  │                         │
+│                    │  (Categorize)│                         │
+│                    └──────────────┘                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│                       MongoDB                               │
+│         Stores parsed & categorized monthly records         │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Page 3 — Instruments
+## 🔄 Data Flow
 
-### Purpose
-Define all RDs/FDs once. This page feeds data into both Dashboard (auto-populates monthly RD instalments as savings entries) and Pool (tracks maturity events).
-
-### UI Components
-
-**3 stat cards**
-- Active RDs count
-- Total monthly going in (sum of all active RD instalments)
-- Next maturity (nearest upcoming date)
-
-**RD cards** (one per instrument, sorted by maturity date)
-
-Each card shows:
-- Name + bank/institution
-- Status badge: `active` / `matured`
-- Detail grid (2×3):
-  - Monthly instalment
-  - Tenure (months)
-  - Maturity date
-  - Paid so far (auto-calculated: instalment × months elapsed)
-  - Remaining months
-  - Maturity amount (entered by user or estimated)
-- Progress bar: months paid / total tenure
-- "View in pool →" link (if matured or upcoming maturity)
-- Footer note: "Auto-populates ₹X in monthly savings"
-- Edit button
-
-**Add new RD form** (collapsible at bottom, toggles open)
-
-Fields:
-- RD name / nickname (text)
-- Bank / institution (text)
-- Monthly instalment ₹ (number)
-- Tenure in months (number)
-- Start date (month picker)
-- Maturity amount ₹ (optional — if blank, estimate as instalment × tenure)
-
-**Live preview while filling form:**
-- "Estimated maturity: ₹X,XX,XXX · Matures MMM YYYY"
-- Updates as user types
-
-On save: writes to Firestore, auto-creates a recurring savings entry template for Dashboard.
-
-### Firestore Structure
 ```
-instruments/
-  {instrument-id}/
-    name: string
-    bank: string
-    monthlyInstalment: number
-    tenureMonths: number
-    startDate: timestamp
-    maturityDate: timestamp (calculated)
-    maturityAmount: number (user-entered or estimated)
-    status: 'active' | 'matured'
-    createdAt: timestamp
+1. User uploads bank statement (PDF or CSV)
+         │
+         ▼
+2. Parser extracts for the selected month:
+   - Opening Balance
+   - Closing Balance
+   - Raw Credits [ ]
+   - Raw Debits  [ ]
+         │
+         ▼
+3. Sanitizer strips PII from credits:
+   - Remove account numbers, names, UPI IDs, phone numbers
+   - Keep: amount, date, generic description/narration
+         │
+         ▼
+4. Sanitized credits → Claude API
+   - Prompt: categorize each transaction
+   - Response: structured JSON with category, sub-category, confidence
+         │
+         ▼
+5. Tally Engine reconciles:
+   Opening Balance + Total Credits − Total Debits = Closing Balance ✅ / ❌
+         │
+         ▼
+6. Save enriched monthly record to MongoDB
+         │
+         ▼
+7. Render dashboard with:
+   - Balance summary
+   - Credit categories (pie / bar chart)
+   - Debit summary
+   - Tally status (pass / mismatch + delta)
 ```
 
 ---
 
-## Firebase / Firestore Structure (Complete)
+## 📁 Project Structure
 
 ```
-users/
-  {userId}/
-    createdAt: timestamp
-    displayName: string
-
-    months/
-      {YYYY-MM}/                          ← e.g. "2025-03"
-        openingBalance: number            ← locked, copied from prev month closing
-        closingBalance: number            ← auto-calculated
-        isConfirmed: boolean              ← true after new month setup flow
-
-        entries/
-          {entryId}/
-            name: string
-            amount: number
-            category: 'credit' | 'savings' | 'investment' | 'expense' | 'subscription'
-            type: 'recurring' | 'one-time'
-            isAutoFromInstrument: boolean ← true if pulled from RD
-            instrumentId?: string
-            createdAt: timestamp
-
-    instruments/
-      {instrumentId}/                     ← as above
-
-    pool/
-      {poolEventId}/                      ← as above
+bank-statement-tally/
+├── client/                          # React frontend
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       │   ├── Upload/              # File upload + month picker
+│       │   ├── Dashboard/           # Monthly summary view
+│       │   ├── TallyStatus/         # Reconciliation result card
+│       │   └── TransactionTable/    # Credits & debits table
+│       ├── pages/
+│       │   ├── Home.jsx
+│       │   └── MonthView.jsx
+│       ├── services/
+│       │   └── api.js               # Axios calls to backend
+│       └── App.jsx
+│
+├── server/                          # Express backend
+│   ├── config/
+│   │   └── db.js                    # MongoDB connection
+│   ├── controllers/
+│   │   ├── statementController.js   # Upload & parse handler
+│   │   └── tallyController.js       # Reconciliation logic
+│   ├── middleware/
+│   │   └── upload.js                # Multer config
+│   ├── models/
+│   │   └── MonthlyRecord.js         # Mongoose schema
+│   ├── routes/
+│   │   ├── statement.js
+│   │   └── tally.js
+│   ├── services/
+│   │   ├── parser/
+│   │   │   ├── pdfParser.js         # PDF statement parser
+│   │   │   └── csvParser.js         # CSV statement parser
+│   │   ├── sanitizer.js             # PII removal logic
+│   │   ├── claudeService.js         # Claude API integration
+│   │   └── tallyEngine.js           # Balance reconciliation
+│   └── index.js
+│
+├── .env.example
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## Business Logic
+## 🔐 PII Sanitization
 
-### Closing balance calculation
+Before any data leaves your server toward the Claude API, the sanitizer removes:
+
+| Field              | Action                              |
+|--------------------|-------------------------------------|
+| Account numbers    | Removed entirely                    |
+| UPI / VPA IDs      | Replaced with `[UPI_ID]`            |
+| Mobile numbers     | Replaced with `[MOBILE]`            |
+| Personal names     | Replaced with `[NAME]`              |
+| IFSC codes         | Replaced with `[IFSC]`              |
+| Email addresses    | Replaced with `[EMAIL]`             |
+
+Only **amount**, **date**, and a **sanitized narration/description** are sent to Claude.
+
+---
+
+## 🤖 Claude API Categorization
+
+Each sanitized credit transaction is sent to Claude with a prompt like:
+
 ```
-closingBalance = openingBalance + sum(credits) - sum(savings) - sum(investments) - sum(expenses) - sum(subscriptions)
+Given a list of bank credit transactions (amount + description only),
+categorize each into one of: Salary, Freelance, Refund, Interest,
+Transfer, Cashback, Investment Return, or Other.
+Return a JSON array with: { id, category, subCategory, confidence }
 ```
 
-### Opening balance rule
-- `months/{YYYY-MM}/openingBalance` = `months/{prev-YYYY-MM}/closingBalance`
-- For the very first month: user sets opening balance manually
-- Once set and month is confirmed, openingBalance is locked (read-only)
-
-### RD auto-population
-When a new month is started:
-1. Fetch all active instruments where `status === 'active'`
-2. For each, create a pre-filled savings entry: `{ name: instrument.name, amount: instrument.monthlyInstalment, category: 'savings', isAutoFromInstrument: true, instrumentId: instrument.id }`
-3. Show in Step 2 of new month setup flow (user can edit amount or uncheck to skip)
-
-### Instrument status auto-update
-- When current date passes `maturityDate`, set `status = 'matured'`
-- Create a pool event: `{ instrumentId, maturedAmount: instrument.maturityAmount, status: 'upcoming', allocations: [] }`
-- Stop auto-populating that RD in new month setup
-
-### Amount display
-- Stat cards: abbreviate — ₹1,54,343 → ₹1.54L
-- Entry rows: full amount with Indian locale formatting — ₹1,54,343
-- Use `toLocaleString('en-IN')` for formatting
+The response is merged back with the original (local) transaction data.
 
 ---
 
-## Mobile UX Patterns
+## ✅ Tally Engine
 
-| Pattern | Implementation |
-|---|---|
-| Add entry | `@gorhom/bottom-sheet` bottom sheet |
-| New month setup | Full-screen modal with 4-step stepper |
-| Swipe to edit/delete entry | `react-native-gesture-handler` Swipeable |
-| Pull to refresh | `RefreshControl` on ScrollView |
-| Date picker (RD start) | `@react-native-community/datetimepicker` |
-| Navigation | `expo-router` bottom tabs |
+The reconciliation check is simple but powerful:
 
----
+```
+Opening Balance
+  + Sum of all Credits
+  - Sum of all Debits
+─────────────────────
+= Expected Closing Balance
 
-## Color System
-
-| Meaning | Color |
-|---|---|
-| Credits / positive | `#1D9E75` (green) |
-| Savings / investments | `#378ADD` (blue) |
-| Expenses | `#D85A30` (coral/red) |
-| Subscriptions / warning | `#BA7517` (amber) |
-| Unallocated pool | `#BA7517` (amber) |
-| Auto-calculated / locked | `#185FA5` (blue, with lock icon) |
-| Background (cards) | `#FFFFFF` |
-| Background (surface) | `#F5F5F5` |
-| Border | `rgba(0,0,0,0.1)` |
+If Expected == Actual Closing Balance → ✅ TALLY PASSED
+If Expected != Actual Closing Balance → ❌ MISMATCH (delta shown)
+```
 
 ---
 
-## Key Constraints for Claude Code
+## 🚀 Getting Started
 
-1. Pool and monthly tracker are **fully independent** — no shared balance, no carry-forward between them
-2. Opening balance is **locked after month is confirmed** — never editable after that
-3. RD instalments **auto-appear** in new month setup as savings entries — user confirms or skips
-4. Maturity amount is **optional on instrument creation** — default to `instalment × tenure` if blank
-5. Bottom tab navigation with 3 tabs: Dashboard, Pool, Instruments
-6. Use **Indian number formatting** throughout (`en-IN` locale, lakh notation in stat cards)
-7. Expo Go compatible — avoid bare native modules where possible; use `expo-reanimated` + `expo-gesture-handler` for bottom sheet (requires development build, acceptable)
+### Prerequisites
+
+- Node.js v18+
+- MongoDB (local or Atlas)
+- Anthropic API key
+
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/bank-statement-tally.git
+cd bank-statement-tally
+
+# Install server dependencies
+cd server && npm install
+
+# Install client dependencies
+cd ../client && npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the `server/` directory:
+
+```env
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/bank-tally
+ANTHROPIC_API_KEY=your_claude_api_key_here
+```
+
+### Run the App
+
+```bash
+# Start backend (from /server)
+npm run dev
+
+# Start frontend (from /client)
+npm start
+```
+
+Visit `http://localhost:3000`
+
+---
+
+## 📦 MongoDB Schema
+
+```js
+// MonthlyRecord
+{
+  month: String,           // e.g. "2024-03"
+  openingBalance: Number,
+  closingBalance: Number,
+  totalCredits: Number,
+  totalDebits: Number,
+  tallyPassed: Boolean,
+  tallyDelta: Number,      // 0 if passed, else the mismatch amount
+  credits: [
+    {
+      date: Date,
+      amount: Number,
+      rawDescription: String,   // stored locally, never sent to API
+      sanitizedDescription: String,
+      category: String,         // from Claude
+      subCategory: String,      // from Claude
+      confidence: Number        // from Claude
+    }
+  ],
+  debits: [
+    {
+      date: Date,
+      amount: Number,
+      description: String
+    }
+  ],
+  createdAt: Date
+}
+```
+
+---
+
+## 🛡️ Privacy & Security Notes
+
+- Raw bank statement files are **not stored** on disk after parsing — they are processed in memory and discarded.
+- PII is stripped **server-side** before any API call.
+- The Claude API only ever sees amounts, dates, and sanitized descriptions.
+- No transaction data is logged in production.
+
+---
+
+## 📌 Roadmap
+
+- [ ] Support for multiple bank formats (SBI, HDFC, ICICI, Axis)
+- [ ] Multi-month trend view
+- [ ] Debit categorization (via Claude)
+- [ ] Export monthly report as PDF
+- [ ] Auth layer (JWT) for multi-user support
+- [ ] Mobile-responsive UI improvements
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](./LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- [Anthropic Claude](https://www.anthropic.com) for AI categorization
+- [PDF.js](https://mozilla.github.io/pdf.js/) for PDF parsing
+- [Mongoose](https://mongoosejs.com/) for MongoDB ODM
