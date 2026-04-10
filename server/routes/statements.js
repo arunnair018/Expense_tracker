@@ -1,11 +1,18 @@
-const express = require('express');
+const express  = require('express');
 const { protect } = require('../middleware/authMiddleware');
+const upload      = require('../middleware/upload');
+const {
+  parseStatement,
+  saveStatement,
+  listStatements,
+  getStatement,
+} = require('../controllers/statementController');
 
 const router = express.Router();
 
-// Placeholder — statement upload & processing routes come next
-router.get('/', protect, (req, res) => {
-  res.json({ message: 'Statements route — coming soon' });
-});
+router.post('/parse', protect, upload.single('file'), parseStatement);
+router.post('/save',  protect, saveStatement);
+router.get('/',       protect, listStatements);
+router.get('/:month', protect, getStatement);
 
 module.exports = router;

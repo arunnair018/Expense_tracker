@@ -1,33 +1,22 @@
 const mongoose = require('mongoose');
 
-const creditSchema = new mongoose.Schema({
-  date: Date,
-  amount: Number,
-  rawDescription: String,
-  sanitizedDescription: String,
-  category: String,
-  subCategory: String,
-  confidence: Number,
-});
-
-const debitSchema = new mongoose.Schema({
-  date: Date,
-  amount: Number,
-  description: String,
-});
+const entrySchema = new mongoose.Schema({
+  name:       { type: String, required: true },
+  amount:     { type: Number, required: true },
+  templateId: { type: mongoose.Schema.Types.ObjectId, default: null },
+  date:       { type: String, default: null },   // for expenses: 'dd Mon yyyy'
+  source:     { type: String, default: 'manual' }, // 'manual' | 'gpay'
+}, { _id: true });
 
 const monthlyRecordSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    month: { type: String, required: true },     // e.g. "2024-03"
-    openingBalance: { type: Number, required: true },
-    closingBalance: { type: Number, required: true },
-    totalCredits: Number,
-    totalDebits: Number,
-    tallyPassed: Boolean,
-    tallyDelta: Number,
-    credits: [creditSchema],
-    debits: [debitSchema],
+    userId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    month:         { type: String, required: true }, // YYYY-MM
+    credits:       [entrySchema],
+    savings:       [entrySchema],
+    investments:   [entrySchema],
+    subscriptions: [entrySchema],
+    expenses:      [entrySchema],
   },
   { timestamps: true }
 );
