@@ -7,10 +7,17 @@ dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB — cached for serverless warm restarts
-connectDB().catch(err => console.error('DB connect error:', err.message));
-
 app.use(express.json());
+
+// ── Ensure DB is connected before any API request ────────────────
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(503).json({ message: 'Database unavailable', error: err.message });
+  }
+});
 
 // ── Routes ──────────────────────────────────────────────────────
 app.use('/api/auth',      require('./routes/auth'));
