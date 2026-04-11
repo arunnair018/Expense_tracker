@@ -1,15 +1,6 @@
-const path           = require('path');
-const { pathToFileURL } = require('url');
-
-const workerSrc = pathToFileURL(
-  path.join(path.dirname(require.resolve('pdfjs-dist/package.json')),
-            'legacy/build/pdf.worker.mjs')
-).href;
-
 async function getPdfjs() {
-  const mod = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  mod.GlobalWorkerOptions.workerSrc = workerSrc;
-  return mod;
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  return pdfjs;
 }
 
 /* ─── helpers ──────────────────────────────────────────────── */
