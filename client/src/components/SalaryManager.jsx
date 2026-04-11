@@ -4,19 +4,24 @@ import { useToast, getErrorMessage } from '../context/ToastContext';
 
 const fmt = (n) => Number(n).toLocaleString('en-IN');
 
+const fmtMonth = (m) => {
+  const [y, mo] = m.split('-');
+  return new Date(+y, +mo - 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+};
+
 const inputStyle = {
-  background: '#0d1529',
-  border: '1px solid rgba(99,130,220,0.2)',
-  color: '#f0f4ff',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-input)',
+  color: 'var(--text-primary)',
 };
 
 export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) {
   const { showToast } = useToast();
-  const [entries,  setEntries]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [amount,   setAmount]   = useState('');
+  const [entries,   setEntries]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [amount,    setAmount]    = useState('');
   const [fromMonth, setFromMonth] = useState(currentMonth);
-  const [saving,   setSaving]   = useState(false);
+  const [saving,    setSaving]    = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -44,9 +49,9 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
         b.effectiveFrom.localeCompare(a.effectiveFrom)
       );
       setEntries(sorted);
-      setAmount('');
       showToast('Salary updated', 'success');
-      onSalaryAdded?.();
+      onSalaryAdded?.(parseFloat(amount));
+      setAmount('');
     } catch (err) {
       showToast(getErrorMessage(err));
     } finally {
@@ -69,36 +74,36 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(8,13,28,0.85)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
     >
       <div
         className="w-full max-w-md rounded-2xl flex flex-col"
-        style={{ background: '#111827', border: '1px solid rgba(99,130,220,0.15)', maxHeight: '80vh' }}
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', maxHeight: '80vh' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(99,130,220,0.1)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
           <div>
-            <h3 className="text-sm font-semibold" style={{ color: '#f0f4ff' }}>Salary History</h3>
-            <p className="text-xs mt-0.5" style={{ color: '#4a6090' }}>Each entry applies from that month onward</p>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Salary History</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Each entry applies from that month onward</p>
           </div>
-          <button onClick={onClose} style={{ color: '#4a6090' }}>✕</button>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)' }}>✕</button>
         </div>
 
         {/* History */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
-            <p className="text-sm text-center py-4" style={{ color: '#4a6090' }}>Loading…</p>
+            <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Loading…</p>
           ) : entries.length === 0 ? (
-            <p className="text-sm text-center py-4" style={{ color: '#3a4d70' }}>No salary configured yet</p>
+            <p className="text-sm text-center py-4" style={{ color: 'var(--text-faint)' }}>No salary configured yet</p>
           ) : (
             <div className="space-y-2">
               {entries.map((e, i) => (
                 <div key={e.effectiveFrom}
                   className="flex items-center justify-between py-2 border-b"
-                  style={{ borderColor: 'rgba(99,130,220,0.08)' }}
+                  style={{ borderColor: 'var(--divider)' }}
                 >
                   <div>
-                    <span className="text-sm" style={{ color: '#c8d6f0' }}>₹ {fmt(e.amount)}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>₹ {fmt(e.amount)}</span>
                     {i === 0 && (
                       <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(29,158,117,0.12)', color: '#1D9E75' }}>
                         current
@@ -106,11 +111,11 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs" style={{ color: '#4a6090' }}>from {e.effectiveFrom}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>from {fmtMonth(e.effectiveFrom)}</span>
                     <button
                       onClick={() => handleDelete(e.effectiveFrom)}
                       className="text-xs"
-                      style={{ color: '#4a6090' }}
+                      style={{ color: 'var(--text-muted)' }}
                     >✕</button>
                   </div>
                 </div>
@@ -120,34 +125,35 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
         </div>
 
         {/* Add / update salary */}
-        <div className="px-5 pb-5 pt-4 border-t" style={{ borderColor: 'rgba(99,130,220,0.1)' }}>
-          <p className="text-xs font-medium mb-2" style={{ color: '#4a6090' }}>Set salary from month</p>
-          <form onSubmit={handleSave} className="flex items-center gap-2">
+        <div className="px-5 pb-5 pt-4 border-t" style={{ borderColor: 'var(--divider)' }}>
+          <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Set salary from month</p>
+          <form onSubmit={handleSave} className="space-y-2">
             <input
               type="month"
               value={fromMonth}
               onChange={e => setFromMonth(e.target.value)}
               required
-              className="px-3 py-1.5 rounded-lg text-sm outline-none"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={inputStyle}
             />
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={amount}
-              onChange={e => setAmount(e.target.value)}
+              onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="Amount"
-              min="0"
               required
-              className="flex-1 px-3 py-1.5 rounded-lg text-sm text-right outline-none"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={inputStyle}
             />
             <button
               type="submit"
               disabled={saving || !amount}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-40"
+              className="w-full py-2 rounded-lg text-sm font-medium disabled:opacity-40"
               style={{ background: '#2563eb', color: '#fff' }}
             >
-              {saving ? '…' : 'Save'}
+              {saving ? 'Saving…' : 'Save salary'}
             </button>
           </form>
         </div>

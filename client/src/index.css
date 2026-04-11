@@ -2,8 +2,141 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base font size (+2px from Tailwind default 16px) ────────── */
+html {
+  font-size: 18px;
+}
+
+/* ── Theme variables ─────────────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --bg-main:        #080d1c;
+  --bg-card:        #111827;
+  --bg-input:       #0d1529;
+  --bg-hover:       rgba(99,130,220,0.08);
+  --text-primary:   #f0f4ff;
+  --text-secondary: #c8d6f0;
+  --text-muted:     #4a6090;
+  --text-faint:     #3a4d70;
+  --border-default: rgba(99,130,220,0.12);
+  --border-card:    rgba(99,130,220,0.15);
+  --border-input:   rgba(99,130,220,0.2);
+  --divider:        rgba(99,130,220,0.08);
+  --shadow:         0 4px 16px rgba(0,0,0,0.4);
+
+  /* Semantic accent colours */
+  --clr-credit:       #1D9E75;
+  --clr-savings:      #378ADD;
+  --clr-expense:      #D85A30;
+  --clr-subscription: #BA7517;
+  --clr-planned:      #9B6ECC;
+  --clr-positive:     #1D9E75;
+  --clr-negative:     #D85A30;
+}
+
+[data-theme="light"] {
+  --bg-main:        #eef2ff;
+  --bg-card:        #ffffff;
+  --bg-input:       #e4eaf8;
+  --bg-hover:       rgba(37,99,235,0.07);
+  --text-primary:   #080e1c;
+  --text-secondary: #14233d;
+  --text-muted:     #3a506e;
+  --text-faint:     #576e90;
+  --border-default: rgba(37,99,235,0.12);
+  --border-card:    rgba(37,99,235,0.18);
+  --border-input:   rgba(37,99,235,0.22);
+  --divider:        rgba(37,99,235,0.1);
+  --shadow:         0 4px 16px rgba(37,99,235,0.1);
+
+  /* Semantic accent colours — darkened for AA contrast on white */
+  --clr-credit:       #0b7a54;
+  --clr-savings:      #1460a8;
+  --clr-expense:      #a82e0c;
+  --clr-subscription: #7a4c08;
+  --clr-planned:      #5c24a8;
+  --clr-positive:     #0b7a54;
+  --clr-negative:     #a82e0c;
+}
+
 body {
-  background-color: #080d1c;
-  color: #f0f4ff;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────── */
+.tip-wrapper {
+  position: relative;
+}
+.tip-wrapper .tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+@media (hover: hover) {
+  .tip-wrapper:hover .tip {
+    opacity: 1;
+  }
+}
+
+/* ── Animations ──────────────────────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideFromLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+.sidebar-panel {
+  animation: slideFromLeft 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Dividers ────────────────────────────────────────────────── */
+.divide-theme > * + * {
+  border-top: 1px solid var(--divider);
+}
+
+/* ── Input focus ring ────────────────────────────────────────── */
+input:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+}
+
+/* ── Toast colours (theme-aware) ─────────────────────────────── */
+:root, [data-theme="dark"] {
+  --toast-error-bg:      #2a1215;
+  --toast-error-border:  #6b2020;
+  --toast-error-text:    #f87171;
+  --toast-success-bg:    #0d2118;
+  --toast-success-border:#1a5c3a;
+  --toast-success-text:  #34d399;
+  --toast-info-bg:       #0d1629;
+  --toast-info-border:   #1e3a6e;
+  --toast-info-text:     #60a5fa;
+}
+[data-theme="light"] {
+  --toast-error-bg:      #fef2f2;
+  --toast-error-border:  #fca5a5;
+  --toast-error-text:    #dc2626;
+  --toast-success-bg:    #f0fdf4;
+  --toast-success-border:#86efac;
+  --toast-success-text:  #16a34a;
+  --toast-info-bg:       #eff6ff;
+  --toast-info-border:   #93c5fd;
+  --toast-info-text:     #2563eb;
 }

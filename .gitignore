@@ -36,6 +36,11 @@ yarn-error.log*
 Thumbs.db
 
 # ========================
+# Claude Code
+# ========================
+.claude/
+
+# ========================
 # Editor / IDE
 # ========================
 .vscode/
@@ -53,9 +58,8 @@ server/uploads/
 *.csv
 
 # ========================
-# Lock files
+# Lock files (keep package-lock.json — Vercel needs it for deterministic installs)
 # ========================
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 

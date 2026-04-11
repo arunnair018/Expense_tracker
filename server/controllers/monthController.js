@@ -2,20 +2,28 @@ const MonthlyRecord = require('../models/MonthlyRecord');
 const RecurringTemplate = require('../models/RecurringTemplate');
 const SalaryConfig = require('../models/SalaryConfig');
 
-const SECTIONS = ['credits', 'savings', 'investments', 'subscriptions', 'expenses'];
+const SECTIONS = ['credits', 'savings', 'investments', 'subscriptions', 'plannedExpenses', 'expenses'];
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
 
 function computeTotals(record) {
-  const sum = (arr) => arr.reduce((s, e) => s + (e.amount || 0), 0);
-  const totalCredits       = sum(record.credits);
-  const totalSavings       = sum(record.savings);
-  const totalInvestments   = sum(record.investments);
-  const totalSubscriptions = sum(record.subscriptions);
-  const totalExpenses      = sum(record.expenses);
-  const totalOutgoing      = totalSavings + totalInvestments + totalSubscriptions + totalExpenses;
-  const balance            = totalCredits - totalOutgoing;
-  return { totalCredits, totalSavings, totalInvestments, totalSubscriptions, totalExpenses, totalOutgoing, balance };
+  const done = (arr) => (arr || []).filter(e => e.completed !== false);
+  const sum  = (arr) => (arr || []).reduce((s, e) => s + (e.amount || 0), 0);
+
+  // Only completed items count toward balance
+  const totalCredits         = sum(done(record.credits));
+  const totalSavings         = sum(done(record.savings));
+  const totalInvestments     = sum(done(record.investments));
+  const totalSubscriptions   = sum(done(record.subscriptions));
+  const totalPlannedExpenses = sum(done(record.plannedExpenses || []));
+  const totalExpenses        = sum(done(record.expenses));
+  const totalOutgoing        = totalSavings + totalInvestments + totalSubscriptions + totalPlannedExpenses + totalExpenses;
+  const balance              = totalCredits - totalOutgoing;
+
+  return {
+    totalCredits, totalSavings, totalInvestments, totalSubscriptions,
+    totalPlannedExpenses, totalExpenses, totalOutgoing, balance,
+  };
 }
 
 async function getEffectiveSalary(userId, month) {
@@ -42,7 +50,7 @@ exports.getMonth = async (req, res) => {
       record = await MonthlyRecord.create({
         userId, month,
         credits,
-        savings: [], investments: [], subscriptions: [], expenses: [],
+        savings: [], investments: [], subscriptions: [], plannedExpenses: [], expenses: [],
       });
     }
 
@@ -104,10 +112,11 @@ exports.updateEntry = async (req, res) => {
     if (!SECTIONS.includes(section)) return res.status(400).json({ message: 'Invalid section' });
 
     const update = {};
-    const { name, amount, date } = req.body;
-    if (name   !== undefined) update[`${section}.$.name`]   = name;
-    if (amount !== undefined) update[`${section}.$.amount`] = amount;
-    if (date   !== undefined) update[`${section}.$.date`]   = date;
+    const { name, amount, date, completed } = req.body;
+    if (name      !== undefined) update[`${section}.$.name`]      = name;
+    if (amount    !== undefined) update[`${section}.$.amount`]    = amount;
+    if (date      !== undefined) update[`${section}.$.date`]      = date;
+    if (completed !== undefined) update[`${section}.$.completed`] = completed;
 
     const record = await MonthlyRecord.findOneAndUpdate(
       { userId, month, [`${section}._id`]: entryId },
@@ -143,6 +152,49 @@ exports.deleteEntry = async (req, res) => {
   }
 };
 
+/* ── POST /api/months/:month/apply-salary ────────────────────────────── */
+// Upserts the effective salary as a "Salary" credit entry for the month.
+exports.applySalary = async (req, res) => {
+  try {
+    const { month } = req.params;
+    const userId    = req.user._id;
+    const salary    = await getEffectiveSalary(userId, month);
+
+    if (salary === null) {
+      let rec = await MonthlyRecord.findOne({ userId, month });
+      if (!rec) rec = await MonthlyRecord.create({ userId, month, credits: [], savings: [], investments: [], subscriptions: [], plannedExpenses: [], expenses: [] });
+      return res.json({ record: rec, totals: computeTotals(rec), applied: false });
+    }
+
+    let record = await MonthlyRecord.findOne({ userId, month });
+    if (!record) {
+      record = await MonthlyRecord.create({ userId, month, credits: [{ name: 'Salary', amount: salary }], savings: [], investments: [], subscriptions: [], plannedExpenses: [], expenses: [] });
+      return res.json({ record, totals: computeTotals(record), applied: true });
+    }
+
+    const salaryIdx = record.credits.findIndex(c => c.name === 'Salary');
+    if (salaryIdx >= 0) {
+      // Update existing
+      record = await MonthlyRecord.findOneAndUpdate(
+        { userId, month, 'credits._id': record.credits[salaryIdx]._id },
+        { $set: { 'credits.$.amount': salary } },
+        { new: true }
+      );
+    } else {
+      // Add new
+      record = await MonthlyRecord.findOneAndUpdate(
+        { userId, month },
+        { $push: { credits: { name: 'Salary', amount: salary } } },
+        { new: true }
+      );
+    }
+
+    res.json({ record, totals: computeTotals(record), applied: true });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 /* ── POST /api/months/:month/:section/apply-templates ────────────────── */
 exports.applyTemplates = async (req, res) => {
   try {
@@ -154,11 +206,16 @@ exports.applyTemplates = async (req, res) => {
     }
 
     const templates = await RecurringTemplate.find({ userId, category: section, isActive: true });
-    if (!templates.length) return res.status(200).json({ message: 'No active templates', added: 0 });
+
+    if (!templates.length) {
+      let rec = await MonthlyRecord.findOne({ userId, month });
+      if (!rec) rec = await MonthlyRecord.create({ userId, month, credits: [], savings: [], investments: [], subscriptions: [], plannedExpenses: [], expenses: [] });
+      return res.status(200).json({ record: rec, totals: computeTotals(rec), message: 'No active templates', added: 0 });
+    }
 
     let record = await MonthlyRecord.findOne({ userId, month });
     if (!record) {
-      record = await MonthlyRecord.create({ userId, month, credits: [], savings: [], investments: [], subscriptions: [], expenses: [] });
+      record = await MonthlyRecord.create({ userId, month, credits: [], savings: [], investments: [], subscriptions: [], plannedExpenses: [], expenses: [] });
     }
 
     // Only add templates not already present (by templateId)
@@ -168,7 +225,7 @@ exports.applyTemplates = async (req, res) => {
 
     const toAdd = templates
       .filter(t => !existingTemplateIds.includes(t._id.toString()))
-      .map(t => ({ name: t.name, amount: t.amount, templateId: t._id }));
+      .map(t => ({ name: t.name, amount: t.amount, templateId: t._id, completed: false }));
 
     if (!toAdd.length) return res.json({ record, totals: computeTotals(record), added: 0 });
 

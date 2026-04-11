@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const ctrl        = require('../controllers/monthController');
 
 router.get   ('/:month',                            protect, ctrl.getMonth);
+router.post  ('/:month/apply-salary',               protect, ctrl.applySalary);
 router.post  ('/:month/:section',                   protect, ctrl.addEntry);
 router.post  ('/:month/:section/bulk',              protect, ctrl.addBulkEntries);
 router.post  ('/:month/:section/apply-templates',   protect, ctrl.applyTemplates);

@@ -45,10 +45,10 @@ export function getErrorMessage(err) {
 }
 
 /* ── Toast UI ── */
-const STYLES = {
-  error:   { bg: 'rgba(216,90,48,0.12)',  border: 'rgba(216,90,48,0.35)',  text: '#f87171', icon: '✕' },
-  success: { bg: 'rgba(29,158,117,0.12)', border: 'rgba(29,158,117,0.35)', text: '#34d399', icon: '✓' },
-  info:    { bg: 'rgba(37,99,235,0.12)',  border: 'rgba(79,142,247,0.35)', text: '#60a5fa', icon: 'ℹ' },
+const TYPE_VARS = {
+  error:   { bg: 'var(--toast-error-bg)',   border: 'var(--toast-error-border)',   text: 'var(--toast-error-text)',   icon: '✕' },
+  success: { bg: 'var(--toast-success-bg)', border: 'var(--toast-success-border)', text: 'var(--toast-success-text)', icon: '✓' },
+  info:    { bg: 'var(--toast-info-bg)',     border: 'var(--toast-info-border)',     text: 'var(--toast-info-text)',     icon: 'ℹ' },
 };
 
 function ToastContainer({ toasts, onDismiss }) {
@@ -57,33 +57,27 @@ function ToastContainer({ toasts, onDismiss }) {
   return (
     <div className="fixed top-5 right-5 z-50 flex flex-col gap-2" style={{ maxWidth: '360px' }}>
       {toasts.map(t => {
-        const s = STYLES[t.type] ?? STYLES.error;
+        const s = TYPE_VARS[t.type] ?? TYPE_VARS.error;
         return (
           <div
             key={t.id}
             className="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg"
             style={{
-              background:  s.bg,
-              border:      `1px solid ${s.border}`,
-              animation:   'slideIn 0.2s ease',
+              background: s.bg,
+              border:     `1px solid ${s.border}`,
+              animation:  'slideIn 0.2s ease',
             }}
           >
             <span className="text-sm font-bold mt-0.5 shrink-0" style={{ color: s.text }}>{s.icon}</span>
-            <p className="text-sm flex-1" style={{ color: '#f0f4ff' }}>{t.message}</p>
+            <p className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>{t.message}</p>
             <button
               onClick={() => onDismiss(t.id)}
               className="text-xs shrink-0 mt-0.5"
-              style={{ color: '#4a6090' }}
+              style={{ color: 'var(--text-muted)' }}
             >✕</button>
           </div>
         );
       })}
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
     </div>
   );
 }
