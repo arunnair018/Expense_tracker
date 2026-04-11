@@ -147,142 +147,176 @@ export default function Dashboard() {
     else         setMonth(prevMo);  // swipe right → prev month
   };
 
+  /* ── Shared max-width wrapper style ──────────────────────── */
+  const inner = { maxWidth: '40rem', margin: '0 auto', width: '100%' };
+
   return (
     <div
-      className="min-h-screen"
-      style={{ background: 'var(--bg-main)' }}
+      style={{
+        height: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        background: 'var(--bg-main)',
+      }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
 
-        {/* ── Top bar ───────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-6">
-
-          {/* Avatar — opens sidebar */}
-          <button
-            onClick={() => setShowSidebar(true)}
-            className="rounded-full flex items-center justify-center text-xs font-bold shrink-0 self-center transition-opacity active:opacity-70"
-            style={{ width: '2.25rem', height: '2.25rem', background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(37,99,235,0.35)', color: '#4f8ef7' }}
-            title={user?.name}
-          >
-            {getInitials(user?.name)}
-          </button>
-
-          {/* Dashboard / Analytics toggle */}
-          <div
-            className="flex items-center gap-0.5 rounded-xl p-1 self-center"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', height: '2.25rem' }}
-          >
-            {['dashboard', 'analytics'].map(view => (
-              <button
-                key={view}
-                onClick={() => setActiveView(view)}
-                className="h-full px-3 rounded-lg text-xs font-semibold capitalize transition-all"
-                style={
-                  activeView === view
-                    ? { background: 'var(--bg-hover)', color: 'var(--text-primary)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }
-                    : { color: 'var(--text-muted)' }
-                }
-              >
-                {view === 'dashboard' ? 'Dashboard' : 'Analytics'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Month switcher + balance ───────────────────────── */}
-        <div className="flex items-center justify-center gap-3 mb-5">
-          <button
-            onClick={() => setMonth(prevMo)}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-card)', color: 'var(--text-secondary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <div className="text-center w-48">
-            <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {fmtMonth(month)}
-            </h2>
-            {!loading && (
-              <p className="text-xs font-medium tabular-nums mt-0.5" style={{ color: balanceColor }}>
-                ₹ {fmt(balance)} remaining
-              </p>
-            )}
-          </div>
-
-          <button
-            onClick={() => setMonth(nextMo)}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-card)', color: 'var(--text-secondary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-
-        {/* ── Content ────────────────────────────────────────── */}
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : activeView === 'analytics' ? (
-          <Analytics totals={totals} />
-        ) : record ? (
-          <>
-            {/* Summary card */}
-            <div
-              className="mb-4 rounded-2xl px-5 py-4"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}
+      {/* ── Fixed app header ──────────────────────────────────── */}
+      <div
+        style={{
+          flexShrink: 0,
+          background: 'var(--bg-main)',
+          borderBottom: '1px solid var(--divider)',
+          paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+          paddingLeft:  'max(1rem, env(safe-area-inset-left))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right))',
+          paddingBottom: '0.75rem',
+        }}
+      >
+        <div style={inner}>
+          {/* Top row: avatar + toggle */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => setShowSidebar(true)}
+              className="rounded-full flex items-center justify-center text-xs font-bold shrink-0 self-center active:opacity-70"
+              style={{ width: '2.25rem', height: '2.25rem', background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(37,99,235,0.35)', color: '#4f8ef7' }}
+              title={user?.name}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                  Remaining this month
-                </span>
-                <span className="text-lg font-bold tabular-nums" style={{ color: balanceColor }}>
-                  ₹ {fmt(balance)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-                {[
-                  ['Income',        totals.totalCredits,         'var(--clr-credit)'],
-                  ['Savings',       totals.totalSavings,         'var(--clr-savings)'],
-                  ['Investments',   totals.totalInvestments,     'var(--clr-savings)'],
-                  ['Subscriptions', totals.totalSubscriptions,   'var(--clr-subscription)'],
-                  ['Planned',       totals.totalPlannedExpenses, 'var(--clr-planned)'],
-                  ['Expenses',      totals.totalExpenses,        'var(--clr-expense)'],
-                ].map(([label, val, color]) => (
-                  <div key={label} className="flex justify-between text-xs">
-                    <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-                    <span style={{ color }} className="tabular-nums font-medium">₹ {fmt(val)}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--text-faint)' }}>Pending items are not counted in the balance</p>
-            </div>
+              {getInitials(user?.name)}
+            </button>
 
-            {/* Sections */}
-            <div className="space-y-3">
-              {ALL_SECTIONS.map(section => (
-                <MonthSection
-                  key={section}
-                  section={section}
-                  entries={record[section] || []}
-                  onAdd={(entry) => handleAdd(section, entry)}
-                  onUpdate={(id, payload) => handleUpdate(section, id, payload)}
-                  onDelete={(id) => handleDelete(section, id)}
-                  onApplyTemplates={() => handleApplyTemplates(section)}
-                  addLoading={addLoading[section]}
-                  applyLoading={applyLoading[section]}
-                />
+            <div
+              className="flex items-center gap-0.5 rounded-xl p-1 self-center"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', height: '2.25rem' }}
+            >
+              {['dashboard', 'analytics'].map(view => (
+                <button
+                  key={view}
+                  onClick={() => setActiveView(view)}
+                  className="h-full px-3 rounded-lg text-xs font-semibold transition-all"
+                  style={
+                    activeView === view
+                      ? { background: 'var(--bg-hover)', color: 'var(--text-primary)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }
+                      : { color: 'var(--text-muted)' }
+                  }
+                >
+                  {view === 'dashboard' ? 'Dashboard' : 'Analytics'}
+                </button>
               ))}
             </div>
-          </>
-        ) : null}
+          </div>
+
+          {/* Month switcher */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setMonth(prevMo)}
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-card)', color: 'var(--text-secondary)' }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            <div className="text-center">
+              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {fmtMonth(month)}
+              </h2>
+              {!loading && (
+                <p className="text-xs font-medium tabular-nums mt-0.5" style={{ color: balanceColor }}>
+                  ₹ {fmt(balance)} remaining
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setMonth(nextMo)}
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-card)', color: 'var(--text-secondary)' }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Scrollable content area ───────────────────────────── */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          paddingLeft:  'max(1rem, env(safe-area-inset-left))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right))',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+          paddingTop: '1rem',
+        }}
+      >
+        <div style={inner}>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : activeView === 'analytics' ? (
+            <Analytics totals={totals} />
+          ) : record ? (
+            <>
+              {/* Summary card */}
+              <div
+                className="mb-4 rounded-2xl px-5 py-4"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                    Remaining this month
+                  </span>
+                  <span className="text-lg font-bold tabular-nums" style={{ color: balanceColor }}>
+                    ₹ {fmt(balance)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                  {[
+                    ['Income',        totals.totalCredits,         'var(--clr-credit)'],
+                    ['Savings',       totals.totalSavings,         'var(--clr-savings)'],
+                    ['Investments',   totals.totalInvestments,     'var(--clr-savings)'],
+                    ['Subscriptions', totals.totalSubscriptions,   'var(--clr-subscription)'],
+                    ['Planned',       totals.totalPlannedExpenses, 'var(--clr-planned)'],
+                    ['Expenses',      totals.totalExpenses,        'var(--clr-expense)'],
+                  ].map(([label, val, color]) => (
+                    <div key={label} className="flex justify-between text-xs">
+                      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+                      <span style={{ color }} className="tabular-nums font-medium">₹ {fmt(val)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs mt-2" style={{ color: 'var(--text-faint)' }}>Pending items are not counted in the balance</p>
+              </div>
+
+              {/* Sections */}
+              <div className="space-y-3">
+                {ALL_SECTIONS.map(section => (
+                  <MonthSection
+                    key={section}
+                    section={section}
+                    entries={record[section] || []}
+                    onAdd={(entry) => handleAdd(section, entry)}
+                    onUpdate={(id, payload) => handleUpdate(section, id, payload)}
+                    onDelete={(id) => handleDelete(section, id)}
+                    onApplyTemplates={() => handleApplyTemplates(section)}
+                    addLoading={addLoading[section]}
+                    applyLoading={applyLoading[section]}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
+
+        </div>
       </div>
 
       {/* ── Sidebar ───────────────────────────────────────────── */}

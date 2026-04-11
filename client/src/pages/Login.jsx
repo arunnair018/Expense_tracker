@@ -44,7 +44,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#080d1c' }}>
+    <div
+      className="flex items-center justify-center px-4 overflow-y-auto"
+      style={{ minHeight: '100dvh', background: '#080d1c', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Background glow */}
       <div
         className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none"
@@ -60,7 +63,7 @@ export default function Login() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: '#f0f4ff' }}>
-            Hisaab
+            Tally Book
           </h1>
           <p className="mt-1 text-sm" style={{ color: '#4a6090' }}>
             {isRegister ? 'Create your account to get started' : 'Welcome back'}

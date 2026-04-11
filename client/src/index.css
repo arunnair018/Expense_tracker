@@ -5,6 +5,23 @@
 /* ── Base font size (+2px from Tailwind default 16px) ────────── */
 html {
   font-size: 18px;
+  height: 100%;
+  /* Prevent iOS from bumping font sizes in landscape */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── App-shell reset ─────────────────────────────────────────── */
+body {
+  height: 100%;
+  /* Kill pull-to-refresh & rubber-band scroll at page level */
+  overscroll-behavior: none;
+  /* Remove tap flash on Android/iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  height: 100%;
 }
 
 /* ── Theme variables ─────────────────────────────────────────── */
