@@ -104,7 +104,7 @@ export default function EntryRow({ entry, onUpdate, onDelete, showDate = false }
             background: isCompleted ? 'rgba(29,158,117,0.2)' : 'transparent',
             border: `1.5px solid ${isCompleted ? '#1D9E75' : 'var(--border-input)'}`,
           }}
-          title={isCompleted ? 'Mark pending' : 'Mark done'}
+          title={isCompleted ? 'Mark as pending' : 'Mark as done'}
         >
           {isCompleted && (
             <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="#1D9E75" strokeWidth={3}>

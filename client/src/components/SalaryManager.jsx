@@ -83,8 +83,8 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
           <div>
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Salary History</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Each entry applies from that month onward</p>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>My Salary</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Changes take effect from the selected month onwards</p>
           </div>
           <button onClick={onClose} style={{ color: 'var(--text-muted)' }}>✕</button>
         </div>
@@ -94,7 +94,7 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
           {loading ? (
             <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Loading…</p>
           ) : entries.length === 0 ? (
-            <p className="text-sm text-center py-4" style={{ color: 'var(--text-faint)' }}>No salary configured yet</p>
+            <p className="text-sm text-center py-4" style={{ color: 'var(--text-faint)' }}>No salary added yet</p>
           ) : (
             <div className="space-y-2">
               {entries.map((e, i) => (
@@ -106,7 +106,7 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>₹ {fmt(e.amount)}</span>
                     {i === 0 && (
                       <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(29,158,117,0.12)', color: '#1D9E75' }}>
-                        current
+                        Active
                       </span>
                     )}
                   </div>
@@ -126,7 +126,7 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
 
         {/* Add / update salary */}
         <div className="px-5 pb-5 pt-4 border-t" style={{ borderColor: 'var(--divider)' }}>
-          <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Set salary from month</p>
+          <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Add a salary change</p>
           <form onSubmit={handleSave} className="space-y-2">
             <input
               type="month"
@@ -153,7 +153,7 @@ export default function SalaryManager({ currentMonth, onClose, onSalaryAdded }) 
               className="w-full py-2 rounded-lg text-sm font-medium disabled:opacity-40"
               style={{ background: '#2563eb', color: '#fff' }}
             >
-              {saving ? 'Saving…' : 'Save salary'}
+              {saving ? 'Saving…' : 'Save'}
             </button>
           </form>
         </div>

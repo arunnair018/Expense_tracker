@@ -82,7 +82,7 @@ export default function MonthSection({
               disabled={applyLoading}
               className="flex items-center justify-center w-7 h-7 rounded-lg disabled:opacity-50"
               style={{ background: 'rgba(55,138,221,0.12)', border: '1px solid rgba(55,138,221,0.25)' }}
-              title="Load templates into this section"
+              title="Add your recurring items to this month"
             >
               {applyLoading ? (
                 <span className="w-3 h-3 border border-[#378ADD] border-t-transparent rounded-full animate-spin" />
@@ -125,8 +125,8 @@ export default function MonthSection({
           {hasCompletion && entries.length > 0 && hasPending && (
             <div className="mb-3">
               <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
-                <span>{done} of {entries.length} done</span>
-                <span style={{ color: '#BA7517' }}>{pendingEntries.length} pending</span>
+                <span>{done}/{entries.length} marked done</span>
+                <span style={{ color: '#BA7517' }}>{pendingEntries.length} still pending</span>
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--border-default)' }}>
                 <div
@@ -139,7 +139,7 @@ export default function MonthSection({
 
           {/* Entries */}
           {entries.length === 0 ? (
-            <p className="text-sm py-2" style={{ color: 'var(--text-faint)' }}>No entries yet</p>
+            <p className="text-sm py-2" style={{ color: 'var(--text-faint)' }}>Nothing added yet</p>
           ) : (
             <div className="divide-y" style={{ borderColor: 'var(--divider)' }}>
               {entries.map(entry => (
@@ -173,7 +173,7 @@ export default function MonthSection({
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              Add manually
+              Add entry
             </button>
           )}
         </div>

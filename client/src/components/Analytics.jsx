@@ -74,7 +74,7 @@ export default function Analytics({ totals }) {
 
   const creditSegments = [
     { label: 'Spent',     value: totalSpending, color: 'var(--clr-expense)' },
-    { label: 'Remaining', value: Math.max(0, balance), color: 'var(--clr-credit)' },
+    { label: 'Left Over', value: Math.max(0, balance), color: 'var(--clr-credit)' },
   ];
 
   return (
@@ -91,8 +91,8 @@ export default function Analytics({ totals }) {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Total Income',   value: totalCredits,  color: 'var(--clr-credit)'   },
-            { label: 'Total Spending', value: totalSpending, color: 'var(--clr-expense)'  },
-            { label: 'Net Savings',    value: balance,       color: balance >= 0 ? 'var(--clr-positive)' : 'var(--clr-negative)' },
+            { label: 'Total Spent',    value: totalSpending, color: 'var(--clr-expense)'  },
+            { label: 'Remaining',      value: balance,       color: balance >= 0 ? 'var(--clr-positive)' : 'var(--clr-negative)' },
           ].map(({ label, value, color }) => (
             <div key={label} className="text-center">
               <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
@@ -103,7 +103,7 @@ export default function Analytics({ totals }) {
         {totalCredits > 0 && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--divider)' }}>
             <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>
-              <span>Amount used</span>
+              <span>Used so far</span>
               <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
                 {fmtPct(totalSpending / totalCredits * 100)} of income
               </span>
@@ -179,13 +179,13 @@ export default function Analytics({ totals }) {
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}
         >
           <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>
-            Income Usage
+            Income Breakdown
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="relative shrink-0">
               <DonutChart segments={creditSegments} size={160} thickness={28} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Savings rate</p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>% Saved</p>
                 <p className="text-sm font-bold" style={{ color: 'var(--clr-savings)' }}>
                   {fmtPct(savingsRate)}
                 </p>

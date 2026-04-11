@@ -60,10 +60,10 @@ export default function Login() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: '#f0f4ff' }}>
-            Bank Statement Tally
+            Hisaab
           </h1>
           <p className="mt-1 text-sm" style={{ color: '#4a6090' }}>
-            {isRegister ? 'Create your account' : 'Sign in to your account'}
+            {isRegister ? 'Create your account to get started' : 'Welcome back'}
           </p>
         </div>
 
@@ -77,14 +77,14 @@ export default function Login() {
             {isRegister && (
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: '#c8d6f0' }}>
-                  Full name
+                  Your name
                 </label>
                 <input
                   type="text"
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="Jane Doe"
+                  placeholder="e.g. Arun Sharma"
                   required
                   className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all"
                   style={{
@@ -132,7 +132,7 @@ export default function Login() {
                   name="password"
                   value={form.password}
                   onChange={handleChange}
-                  placeholder={isRegister ? 'Min 6 characters' : '••••••••'}
+                  placeholder={isRegister ? 'At least 6 characters' : '••••••••'}
                   required
                   minLength={6}
                   className="w-full px-4 py-2.5 pr-11 rounded-xl text-sm outline-none transition-all"
@@ -186,10 +186,10 @@ export default function Login() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {isRegister ? 'Creating account…' : 'Signing in…'}
+                  {isRegister ? 'Setting up your account…' : 'Signing in…'}
                 </span>
               ) : (
-                isRegister ? 'Create account' : 'Sign in'
+                isRegister ? 'Create Account' : 'Sign In'
               )}
             </button>
           </form>
@@ -197,7 +197,7 @@ export default function Login() {
 
         {/* Toggle login / register */}
         <p className="text-center mt-5 text-sm" style={{ color: '#4a6090' }}>
-          {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+          {isRegister ? 'Already have an account?' : "Don't have an account yet?"}{' '}
           <button
             onClick={toggleMode}
             className="font-medium transition-colors"
@@ -205,7 +205,7 @@ export default function Login() {
             onMouseEnter={(e) => (e.target.style.color = '#93c5fd')}
             onMouseLeave={(e) => (e.target.style.color = '#4f8ef7')}
           >
-            {isRegister ? 'Sign in' : 'Create one'}
+            {isRegister ? 'Sign in' : 'Sign up free'}
           </button>
         </p>
       </div>

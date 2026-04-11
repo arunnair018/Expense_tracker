@@ -249,12 +249,12 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
                 {[
-                  ['Credits',  totals.totalCredits,         'var(--clr-credit)'],
-                  ['Savings',  totals.totalSavings,         'var(--clr-savings)'],
-                  ['Invest',   totals.totalInvestments,     'var(--clr-savings)'],
-                  ['Subscr',   totals.totalSubscriptions,   'var(--clr-subscription)'],
-                  ['Planned',  totals.totalPlannedExpenses, 'var(--clr-planned)'],
-                  ['Expenses', totals.totalExpenses,        'var(--clr-expense)'],
+                  ['Income',        totals.totalCredits,         'var(--clr-credit)'],
+                  ['Savings',       totals.totalSavings,         'var(--clr-savings)'],
+                  ['Investments',   totals.totalInvestments,     'var(--clr-savings)'],
+                  ['Subscriptions', totals.totalSubscriptions,   'var(--clr-subscription)'],
+                  ['Planned',       totals.totalPlannedExpenses, 'var(--clr-planned)'],
+                  ['Expenses',      totals.totalExpenses,        'var(--clr-expense)'],
                 ].map(([label, val, color]) => (
                   <div key={label} className="flex justify-between text-xs">
                     <span style={{ color: 'var(--text-muted)' }}>{label}</span>
@@ -262,7 +262,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--text-faint)' }}>Only completed items counted</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-faint)' }}>Pending items are not counted in the balance</p>
             </div>
 
             {/* Sections */}

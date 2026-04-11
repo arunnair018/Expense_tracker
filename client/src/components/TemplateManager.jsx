@@ -212,8 +212,8 @@ export default function TemplateManager({ onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
           <div>
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recurring Templates</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Click any item to edit · checkmark = included in apply</p>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recurring Items</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Tap name or amount to edit · tick means it will be applied</p>
           </div>
           <button onClick={onClose} style={{ color: 'var(--text-muted)' }}>✕</button>
         </div>
@@ -230,7 +230,7 @@ export default function TemplateManager({ onClose }) {
                     {cat}
                   </p>
                   {grouped[cat].length === 0 ? (
-                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>No templates yet</p>
+                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>No items added yet</p>
                   ) : (
                     <div className="divide-y" style={{ borderColor: 'var(--divider)' }}>
                       {grouped[cat].map(t => (
@@ -253,7 +253,7 @@ export default function TemplateManager({ onClose }) {
 
         {/* Add new template */}
         <div className="px-5 pb-5 pt-4 border-t" style={{ borderColor: 'var(--divider)' }}>
-          <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>New template</p>
+          <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Add a new recurring item</p>
           <form onSubmit={handleAdd} className="space-y-2">
             <select
               value={form.category}
@@ -266,7 +266,7 @@ export default function TemplateManager({ onClose }) {
             <input
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Name (e.g. RD LIC-957)"
+              placeholder="Name (e.g. RD, SIP, Netflix)"
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={inputStyle}
             />
