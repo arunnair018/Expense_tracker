@@ -8,11 +8,7 @@ node_modules/
 # ========================
 # Environment & Secrets
 # ========================
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
 
 # ========================
 # Build output
@@ -36,9 +32,9 @@ yarn-error.log*
 Thumbs.db
 
 # ========================
-# Claude Code
+# Vercel
 # ========================
-.claude/
+.vercel/
 
 # ========================
 # Editor / IDE
@@ -58,14 +54,14 @@ server/uploads/
 *.csv
 
 # ========================
-# Lock files (keep package-lock.json — Vercel needs it for deterministic installs)
-# ========================
-yarn.lock
-pnpm-lock.yaml
-
-# ========================
-# Misc
+# Cache / Coverage
 # ========================
 .cache/
 .parcel-cache/
+node_modules/.cache/
 coverage/
+
+# ========================
+# Future-proofing
+# ========================
+.next/
