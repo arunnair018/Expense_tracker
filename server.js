@@ -1,5 +1,5 @@
 const path = require('path');
-const express   = require('express');
+const express = require('express');
 const dotenv    = require('dotenv');
 const connectDB = require('./config/db');
 
@@ -28,12 +28,13 @@ app.use('/api/gpay',      require('./routes/gpay'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// ── Serve frontend static files ────────────────────────────────
-app.use(express.static(path.join(__dirname, 'client', 'dist')));
-// SPA fallback for frontend routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
-});
+// ── Serve frontend static files (local dev only) ──────────────
+if (!process.env.VERCEL) {
+  app.use(express.static(path.join(__dirname, 'client', 'dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  });
+}
 
 // ── Listen (local dev only) ─────────────────────────────────────
 // Vercel manages the server lifecycle in production — never call listen() there
