@@ -2,14 +2,8 @@
   "version": 2,
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "client/dist",
-  "functions": {
-    "server.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server.js" },
+    { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
